@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nisam</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; display:grid; place-items:center;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background: radial-gradient(circle at top, #1b1b2f, #0f0f1a);
+    color:#fff; overflow:hidden; padding:18px;
+  }
+  .card{
+    width:min(680px,95vw);
+    padding:26px 22px;
+    border-radius:20px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    box-shadow:0 18px 50px rgba(0,0,0,.35);
+  }
+
+  /* 1) Açılış */
+  #welcome{
+    text-align:center;
+    display:flex; flex-direction:column; gap:18px;
+  }
+  #welcome h1{
+    margin:0;
+    font-size:44px;
+    letter-spacing:2px;
+  }
+  #welcome button{
+    margin:0 auto;
+    padding:14px 22px;
+    font-size:18px;
+    font-weight:900;
+    border-radius:14px;
+    border:none;
+    cursor:pointer;
+    background:#ff4d6d;
+    color:#fff;
+  }
+  #welcome button:hover{filter:brightness(1.05)}
+
+  /* 2) Soru ekranı */
+  #qa{ display:none; text-align:center; }
+  #qa .title{ font-size:20px; font-weight:900; margin:0 0 14px; }
+  .btnRow{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn{
+    padding:12px 18px;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:900;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.12);
+    color:#fff;
+    user-select:none;
+  }
+  .btn:hover{ background:rgba(255,255,255,.16); }
+  #yes{ background:#ff4d6d; border:none; }
+  #no{ background:#444; border:none; position:relative; }
+
+  /* 3) Sonuç/metin ekranı */
+  #result{ display:none; margin-top:16px; }
+  .box{
+    padding:14px;
+    border-radius:12px;
+    background:rgba(0,0,0,.35);
+    border:1px solid rgba(255,255,255,.10);
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    white-space:pre-wrap;
+    min-height:170px;
+    line-height:1.55;
+  }
+
+  /* Kalpler */
+  .float{
+    position:fixed; left:var(--x); top:110vh;
+    font-size:var(--s);
+    animation:rise var(--t) linear forwards;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,.35));
+    pointer-events:none;
+    opacity:.95;
+  }
+  @keyframes rise{
+    to{ transform:translateY(-140vh) rotate(18deg); opacity:0; }
+  }
+</style>
+</head>
+
+<body>
+  <div class="card">
+
+    <!-- AÇILIŞ -->
+    <div id="welcome">
+      <h1>MERHABA NİSAM</h1>
+      <button id="start">ÇALIŞTIR</button>
+    </div>
+
+    <!-- SORU/CEVAP -->
+    <div id="qa">
+      <div class="title">Nisam, bu döngüyü birlikte sonsuza kadar çalıştıralım mı?</div>
+      <div class="btnRow">
+        <button class="btn" id="yes">Evet</button>
+        <button class="btn" id="no">Hayır</button>
+      </div>
+    </div>
+
+    <!-- SONUÇ -->
+    <div id="result">
+      <div class="box" id="box"></div>
+    </div>
+
+  </div>
+
+<script>
+  const sevgilim = "Nisam";
+  const imza = "— Cemal Talha";
+
+  const welcome = document.getElementById("welcome");
+  const qa = document.getElementById("qa");
+  const result = document.getElementById("result");
+  const box = document.getElementById("box");
+  const noBtn = document.getElementById("no");
+
+  // Metin
+  const romanticText =
+`${sevgilim},
+Zaman geçse de,
+şartlar değişse de,
+benim içimde değişmeyen tek şey
+sana olan sevgim.
+
+Seni çok seviyorum ❤️
+${imza}`;
+
+  function typeText(text, speed=22){
+    box.textContent = "";
+    let i = 0;
+    const t = setInterval(() => {
+      box.textContent += text[i] ?? "";
+      i++;
+      if (i >= text.length) clearInterval(t);
+    }, speed);
+  }
+
+  function hearts(count=26){
+    for(let i=0;i<count;i++){
+      const h=document.createElement("div");
+      h.className="float";
+      h.textContent = Math.random() > 0.4 ? "❤️" : "💖";
+      h.style.setProperty("--x", (Math.random()*100) + "vw");
+      h.style.setProperty("--s", (14 + Math.random()*22) + "px");
+      h.style.setProperty("--t", (2.2 + Math.random()*2.2) + "s");
+      document.body.appendChild(h);
+      h.addEventListener("animationend",()=>h.remove());
+    }
+  }
+
+  // 1) ÇALIŞTIR -> soru ekranı
+  document.getElementById("start").addEventListener("click", () => {
+    welcome.style.display = "none";
+    qa.style.display = "block";
+    hearts(14);
+  });
+
+  // 2) HAYIR kaçsın (hover + tıklama anında)
+  function dodge(){
+    const card = document.querySelector(".card");
+    const rect = card.getBoundingClientRect();
+
+    // butonun yeni konumu: kart içinde rastgele
+    const maxX = rect.width - noBtn.offsetWidth - 24;
+    const maxY = 70; // sadece yukarı-aşağı az kaçsın, çok dağılmasın
+
+    const x = Math.floor(Math.random() * Math.max(1, maxX));
+    const y = Math.floor(Math.random() * Math.max(1, maxY));
+
+    noBtn.style.transform = `translate(${x}px, ${y}px)`;
+  }
+
+  noBtn.addEventListener("mouseenter", dodge);
+  noBtn.addEventListener("mousedown", (e) => { e.preventDefault(); dodge(); });
+  noBtn.addEventListener("click", (e) => { e.preventDefault(); dodge(); });
+
+  // 3) EVET -> metin gelsin
+  document.getElementById("yes").addEventListener("click", () => {
+    qa.style.display = "none";
+    result.style.display = "block";
+    hearts(34);
+
+    typeText(
+`while(true){
+  console.log("Seni seviyorum ${sevgilim} ❤️");
+}
+
+Bazı döngüler kapatılmaz.
+Çünkü en doğru sonucu verir.
+
+${imza}`, 18
+    );
+
+    // Ardından romantik metne geçsin (isteğe bağlı akış)
+    setTimeout(()=>{
+      hearts(28);
+      typeText(romanticText, 24);
+    }, 2400);
+  });
+</script>
+</body>
+</html>
